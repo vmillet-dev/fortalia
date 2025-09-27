@@ -1,17 +1,13 @@
 version: 2.1
-
+orbs:
+  win: circleci/windows@5.0
 jobs:
-  say-hello:
-    machine:
-      image: 'windows-server-2022'
-    resource_class: windows.large
+  build:
+    executor: win/server-2022
     steps:
       - checkout
-      - run:
-          name: "Say hello"
-          command: 'echo Hello, World!'
-
+      - run: Write-Host 'Hello, Windows'
 workflows:
-  say-hello-workflow:
+  my-workflow:
     jobs:
-      - say-hello
+      - build
