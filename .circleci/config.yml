@@ -3,8 +3,8 @@ version: 2.1
 jobs:
   say-hello:
     machine:
-      image: 'windows-server-2019'
-    resource_class: windows.medium
+      image: 'windows-server-2022'
+    resource_class: windows.large
     steps:
       - checkout
       - run:
