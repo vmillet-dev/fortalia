@@ -5,24 +5,26 @@ orbs:
 
 jobs:
   build:
-    executor: win/server-2022
-    size: large
+    executor:
+      name: win/server-2022
+      size: large
     steps:
       - checkout
       - run:
-          name: Login à Docker Hub
+          name: Docker login (si privé, sinon tu peux sauter)
           command: docker login -u $env:DOCKERHUB_USERNAME -p $env:DOCKERHUB_PAT
       - run:
-          name: Pull image Windows Server Core
+          name: Pull Windows Server Core
           command: docker pull mcr.microsoft.com/windows/servercore:ltsc2022
       - run:
-          name: Lancer un conteneur et exécuter une commande
-          command: docker run --rm mcr.microsoft.com/windows/servercore:ltsc2022 cmd /c echo "Hello depuis le conteneur Windows"
+          name: Lancer conteneur
+          command: docker run --rm mcr.microsoft.com/windows/servercore:ltsc2022 cmd /c echo "Hello depuis ServerCore ltsc2022"
       - run:
           name: Hello depuis la VM
-          command: Write-Host 'Hello, Windows VM'
-
+          command: Write-Host "Hello depuis l'executor Windows"
+          
 workflows:
   my-workflow:
     jobs:
-      - build
+      - buil
+      d
