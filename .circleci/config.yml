@@ -5,12 +5,18 @@ orbs:
 
 jobs:
   build:
-    executor: win/server-2022
+    executor: win/server-2022:large
+    steps:
+      - checkout
+     jobs:
+  build:
+    executor:
+      name: win/server-2022:large
     steps:
       - checkout
       - run:
-          name: Vérifier version Docker
-          command: docker --version
+          name: Login à Docker Hub
+          command: docker login -u $env:DOCKERHUB_USERNAME -p $env:DOCKERHUB_PAT
       - run:
           name: Pull image Windows Server Core
           command: docker pull mcr.microsoft.com/windows/servercore:ltsc2022
