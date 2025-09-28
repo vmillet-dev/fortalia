@@ -5,7 +5,7 @@ jobs:
     machine:
       image: 'windows-server-2022-gui:current'
       shell: 'powershell.exe -ExecutionPolicy Bypass'
-    resource_class: 'windows.medium'
+    resource_class: 'windows.large'
     steps:
       - checkout
       - run:
