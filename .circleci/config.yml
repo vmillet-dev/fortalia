@@ -11,7 +11,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Pull image Windows Server Core
+          name: Pull image Unreal Engine
+          no_output_timeout: 40m
           command: docker pull $Env:DOCKER_IMAGE
       - run:
           name: Lancer un conteneur et exécuter une commande
