@@ -6,12 +6,9 @@ orbs:
 jobs:
   build:
     executor: win/server-2022
+    resource_class: large
     steps:
       - checkout
-      - run:
-          name: Docker login
-          shell: powershell.exe
-          command: $env:DOCKERHUB_PASSWORD | docker login -u $env:DOCKERHUB_USERNAME --password-stdin
       - run:
           name: Pull image Windows Server Core
           command: docker pull mcr.microsoft.com/windows/servercore:ltsc2022
