@@ -6,12 +6,7 @@ orbs:
 jobs:
   build:
     executor: win/server-2022
-    steps:
-      - checkout
-     jobs:
-  build:
-    executor:
-      name: win/server-2022:large
+    size: large
     steps:
       - checkout
       - run:
