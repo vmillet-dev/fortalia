@@ -1,11 +1,11 @@
 version: 2.1
 
-orbs:
-  win: circleci/windows@5.0
-
 jobs:
   build:
-    executor: win/server-2022:large
+    machine:
+      image: 'windows-server-2022-gui:current'
+      shell: 'powershell.exe -ExecutionPolicy Bypass'
+    resource_class: 'windows.medium'
     steps:
       - checkout
       - run:
