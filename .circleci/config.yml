@@ -5,8 +5,7 @@ orbs:
 
 jobs:
   build:
-    executor: win/server-2022
-    resource_class: large
+    executor: win/server-2022:large
     steps:
       - checkout
       - run:
