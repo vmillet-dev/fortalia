@@ -6,14 +6,20 @@ jobs:
       image: 'windows-server-2022-gui:current'
       shell: 'powershell.exe -ExecutionPolicy Bypass'
     resource_class: 'windows.large'
+    environment:
+      DOCKER_IMAGE: "mcr.microsoft.com/windows/servercore:ltsc2022"
     steps:
       - checkout
       - run:
+          name: Connexion à DockerHub
+          command: |
+            echo $Env:DOCKERHUB_PAT | docker login -u $Env:DOCKERHUB_USERNAME --password-stdin
+      - run:
           name: Pull image Windows Server Core
-          command: docker pull mcr.microsoft.com/windows/servercore:ltsc2022
+          command: docker pull $Env:DOCKER_IMAGE
       - run:
           name: Lancer un conteneur et exécuter une commande
-          command: docker run --rm mcr.microsoft.com/windows/servercore:ltsc2022 cmd /c echo "Hello depuis le conteneur Windows"
+          command: docker run --rm $Env:DOCKER_IMAGE cmd /c echo "Hello depuis le conteneur Windows"
       - run:
           name: Hello depuis la VM
           command: Write-Host 'Hello, Windows VM'
