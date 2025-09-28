@@ -7,13 +7,9 @@ jobs:
       shell: 'powershell.exe -ExecutionPolicy Bypass'
     resource_class: 'windows.large'
     environment:
-      DOCKER_IMAGE: "mcr.microsoft.com/windows/servercore:ltsc2022"
+      DOCKER_IMAGE: "vmilletdev/unreal-engine:5.6"
     steps:
       - checkout
-      - run:
-          name: Connexion à DockerHub
-          command: |
-            echo $Env:DOCKERHUB_PAT | docker login -u $Env:DOCKERHUB_USERNAME --password-stdin
       - run:
           name: Pull image Windows Server Core
           command: docker pull $Env:DOCKER_IMAGE
