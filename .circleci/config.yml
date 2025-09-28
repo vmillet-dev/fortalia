@@ -13,17 +13,16 @@ jobs:
           name: Docker login
           command: docker login -u $env:DOCKERHUB_USERNAME -p $env:DOCKERHUB_PAT
       - run:
-          name: Pull Windows Server Core
+          name: Pull image Windows Server Core
           command: docker pull mcr.microsoft.com/windows/servercore:ltsc2022
       - run:
-          name: Lancer conteneur
-          command: docker run --rm mcr.microsoft.com/windows/servercore:ltsc2022 cmd /c echo "Hello depuis ServerCore ltsc2022"
+          name: Lancer un conteneur et exécuter une commande
+          command: docker run --rm mcr.microsoft.com/windows/servercore:ltsc2022 cmd /c echo "Hello depuis le conteneur Windows"
       - run:
           name: Hello depuis la VM
-          command: Write-Host "Hello depuis l'executor Windows"
-          
+          command: Write-Host 'Hello, Windows VM'
+
 workflows:
   my-workflow:
     jobs:
-      - buil
-      d
+      - build
