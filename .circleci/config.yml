@@ -5,13 +5,12 @@ orbs:
 
 jobs:
   build:
-    executor:
-      name: win/server-2022
-      size: large
+    executor: win/server-2022
+    resource_class: large
     steps:
       - checkout
       - run:
-          name: Docker login (si privé, sinon tu peux sauter)
+          name: Docker login
           command: docker login -u $env:DOCKERHUB_USERNAME -p $env:DOCKERHUB_PAT
       - run:
           name: Pull Windows Server Core
