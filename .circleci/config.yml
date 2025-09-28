@@ -1,12 +1,26 @@
 version: 2.1
+
 orbs:
   win: circleci/windows@5.0
+
 jobs:
   build:
     executor: win/server-2022
     steps:
       - checkout
-      - run: Write-Host 'Hello, Windows'
+      - run:
+          name: Vérifier version Docker
+          command: docker --version
+      - run:
+          name: Pull image Windows Server Core
+          command: docker pull mcr.microsoft.com/windows/servercore:ltsc2022
+      - run:
+          name: Lancer un conteneur et exécuter une commande
+          command: docker run --rm mcr.microsoft.com/windows/servercore:ltsc2022 cmd /c echo "Hello depuis le conteneur Windows"
+      - run:
+          name: Hello depuis la VM
+          command: Write-Host 'Hello, Windows VM'
+
 workflows:
   my-workflow:
     jobs:
