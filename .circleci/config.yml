@@ -1,9 +1,9 @@
-version: 2.1
-
+version: '2.1'
+orbs:
+  win: circleci/windows@5.0
 jobs:
   build:
-    machine:
-      image: 'vmilletdev/unreal-engine:5.6.1'
+    executor: win/server-2022
     environment:
       DOCKER_IMAGE: "vmilletdev/unreal-engine:5.6.1"
       PROJECT_NAME: "fortalia"
