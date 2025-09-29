@@ -7,7 +7,8 @@ jobs:
       shell: 'powershell.exe -ExecutionPolicy Bypass'
     resource_class: 'windows.large'
     environment:
-      DOCKER_IMAGE: "vmilletdev/unreal-engine:5.6"
+      DOCKER_IMAGE: "vmilletdev/unreal-engine:5.6.1"
+      PROJECT_NAME: "fortalia"
     steps:
       - checkout
       - run:
@@ -15,11 +16,19 @@ jobs:
           no_output_timeout: 40m
           command: docker pull $Env:DOCKER_IMAGE
       - run:
-          name: Lancer un conteneur et exécuter une commande
-          command: docker run --rm $Env:DOCKER_IMAGE cmd /c echo "Hello depuis le conteneur Windows"
-      - run:
-          name: Hello depuis la VM
-          command: Write-Host 'Hello, Windows VM'
+          name: Package Unreal project
+          command: |
+            docker run --rm -v "$env:CIRCLE_WORKING_DIRECTORY\$env:PROJECT_NAME:C:\$env:PROJECT_NAME" $Env:DOCKER_IMAGE Engine\Build\BatchFiles\RunUAT.bat BuildCookRun ^
+             -project=C:\$env:PROJECT_NAME\$env:PROJECT_NAME.uproject ^
+             -noP4 ^
+             -platform=Win64 ^
+             -clientconfig=Shipping ^
+             -build ^
+             -cook ^
+             -stage ^
+             -package ^
+             -archive ^
+             -archivedirectory=C:\$env:PROJECT_NAME\Build
 
 workflows:
   my-workflow:
