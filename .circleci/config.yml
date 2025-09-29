@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   build:
     machine:
-      image: 'windows-server-2022-gui:current'
+      image: 'vmilletdev/unreal-engine:5.6.1'
       shell: 'powershell.exe -ExecutionPolicy Bypass'
     resource_class: 'windows.large'
     environment:
