@@ -31,26 +31,18 @@ jobs:
             Write-Host "Checkout path: $checkoutPath"
             Write-Host "Project path: $projectPath"
             Write-Host "Docker image: ${env:UE5_DOCKER_IMAGE}"
-            
-            docker run --rm `
-              -v "${checkoutPath}:${projectPath}" `
-              ${env:UE5_DOCKER_IMAGE} `
-              powershell -Command "
-                & 'C:\UnrealEngine\Engine\Build\BatchFiles\RunUAT.bat' `
-                  BuildCookRun `
-                  -project='${projectPath}\${env:PROJECT_NAME}.uproject' `
-                  -platform=Win64 `
-                  -clientconfig=Shipping `
-                  -serverconfig=Shipping `
-                  -cook `
-                  -allmaps `
-                  -build `
-                  -stage `
-                  -archive `
-                  -archivedirectory='${projectPath}\Build' `
-                  -pak `
-                  -nodebuginfo
-              "
+
+            docker run --rm -v "${checkoutPath}:${projectPath}" ${env:UE5_DOCKER_IMAGE} Engine\Build\BatchFiles\RunUAT.bat BuildCookRun ^
+             -project=${projectPath}\${env:PROJECT_NAME}.uproject ^
+             -noP4 ^
+             -platform=Win64 ^
+             -clientconfig=Shipping ^
+             -build ^
+             -cook ^
+             -stage ^
+             -package ^
+             -archive ^
+             -archivedirectory='${projectPath}\Build'
       
       - run:
           name: Zip Build Output
