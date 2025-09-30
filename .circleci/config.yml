@@ -10,8 +10,8 @@ jobs:
       size: large
     
     environment:
-      PROJECT_NAME: "MyUnrealProject"
-      UE5_DOCKER_IMAGE: "ghcr.io/epicgames/unreal-engine:5.3-runtime"
+      PROJECT_NAME: "fortalia"
+      UE5_DOCKER_IMAGE: "vmilletdev/unreal-engine:5.6.1"
     
     steps:
       - checkout
