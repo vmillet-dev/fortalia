@@ -25,23 +25,23 @@ jobs:
           name: Build and Cook UE Project
           shell: powershell.exe
           command: |
-            $projectPath = "C:\${env:PROJECT_NAME}"
+            $projectPath = "C:\$env:PROJECT_NAME"
             $checkoutPath = $PWD.Path
             
             Write-Host "Checkout path: $checkoutPath"
             Write-Host "Project path: $projectPath"
-            Write-Host "Docker image: ${env:UE5_DOCKER_IMAGE}"
-
-            docker run --rm -v "${checkoutPath}:${projectPath}" ${env:UE5_DOCKER_IMAGE} Engine\Build\BatchFiles\RunUAT.bat BuildCookRun ^
-             -project="${projectPath}\${env:PROJECT_NAME}.uproject" ^
-             -noP4 ^
-             -platform=Win64 ^
-             -clientconfig=Shipping ^
-             -build ^
-             -cook ^
-             -stage ^
-             -package ^
-             -archive ^
+            Write-Host "Docker image: $env:UE5_DOCKER_IMAGE"
+            
+            docker run --rm -v "${checkoutPath}:${projectPath}" $env:UE5_DOCKER_IMAGE Engine\Build\BatchFiles\RunUAT.bat BuildCookRun `
+             -project="${projectPath}\$env:PROJECT_NAME.uproject" `
+             -noP4 `
+             -platform=Win64 `
+             -clientconfig=Shipping `
+             -build `
+             -cook `
+             -stage `
+             -package `
+             -archive `
              -archivedirectory="${projectPath}\Build"
       
       - run:
