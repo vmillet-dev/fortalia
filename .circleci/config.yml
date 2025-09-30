@@ -15,12 +15,16 @@ jobs:
     
     steps:
       - checkout
+
+      - run:
+          name: Pull image Unreal Engine
+          no_output_timeout: 40m
+          command: docker pull $env:UE5_DOCKER_IMAGE
       
       - run:
-          name: Build and Cook Unreal Engine Project
+          name: Build and Cook UE Project
           shell: powershell.exe
           command: |
-            # Définir les chemins
             $projectPath = "C:\${env:PROJECT_NAME}"
             $checkoutPath = $PWD.Path
             
@@ -28,7 +32,6 @@ jobs:
             Write-Host "Project path: $projectPath"
             Write-Host "Docker image: ${env:UE5_DOCKER_IMAGE}"
             
-            # Exécuter le build dans le conteneur Docker
             docker run --rm `
               -v "${checkoutPath}:${projectPath}" `
               ${env:UE5_DOCKER_IMAGE} `
@@ -37,8 +40,8 @@ jobs:
                   BuildCookRun `
                   -project='${projectPath}\${env:PROJECT_NAME}.uproject' `
                   -platform=Win64 `
-                  -clientconfig=Development `
-                  -serverconfig=Development `
+                  -clientconfig=Shipping `
+                  -serverconfig=Shipping `
                   -cook `
                   -allmaps `
                   -build `
@@ -46,7 +49,6 @@ jobs:
                   -archive `
                   -archivedirectory='${projectPath}\Build' `
                   -pak `
-                  -prereqs `
                   -nodebuginfo
               "
       
