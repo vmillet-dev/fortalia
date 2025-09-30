@@ -33,7 +33,7 @@ jobs:
             Write-Host "Docker image: ${env:UE5_DOCKER_IMAGE}"
 
             docker run --rm -v "${checkoutPath}:${projectPath}" ${env:UE5_DOCKER_IMAGE} Engine\Build\BatchFiles\RunUAT.bat BuildCookRun ^
-             -project=${projectPath}\${env:PROJECT_NAME}.uproject ^
+             -project="${projectPath}\${env:PROJECT_NAME}.uproject" ^
              -noP4 ^
              -platform=Win64 ^
              -clientconfig=Shipping ^
@@ -42,7 +42,7 @@ jobs:
              -stage ^
              -package ^
              -archive ^
-             -archivedirectory='${projectPath}\Build'
+             -archivedirectory="${projectPath}\Build"
       
       - run:
           name: Zip Build Output
