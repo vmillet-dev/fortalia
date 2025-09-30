@@ -42,6 +42,7 @@ jobs:
               -compressed `
               -archive `
               -archivedirectory="${projectPath}\Build" `
+              -nodebuginfo `
               -encryptinifiles
       
       - run:
