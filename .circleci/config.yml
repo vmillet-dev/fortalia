@@ -1,34 +1,78 @@
-version: '2.1'
+version: 2.1
+
 orbs:
   win: circleci/windows@5.0
+
 jobs:
-  build:
-    executor: win/server-2022
+  build-unreal-project:
+    executor:
+      name: win/server-2022
+      size: large
+    
     environment:
-      DOCKER_IMAGE: "vmilletdev/unreal-engine:5.6.1"
-      PROJECT_NAME: "fortalia"
+      PROJECT_NAME: "MyUnrealProject"
+      UE5_DOCKER_IMAGE: "ghcr.io/epicgames/unreal-engine:5.3-runtime"
+    
     steps:
       - checkout
+      
       - run:
-          name: Pull image Unreal Engine
-          no_output_timeout: 40m
-          command: docker pull $Env:DOCKER_IMAGE
-      - run:
-          name: Package Unreal project
+          name: Build and Cook Unreal Engine Project
+          shell: powershell.exe
           command: |
-            docker run --rm -v "$env:CIRCLE_WORKING_DIRECTORY\$env:PROJECT_NAME:C:\$env:PROJECT_NAME" $Env:DOCKER_IMAGE Engine\Build\BatchFiles\RunUAT.bat BuildCookRun ^
-             -project=C:\$env:PROJECT_NAME\$env:PROJECT_NAME.uproject ^
-             -noP4 ^
-             -platform=Win64 ^
-             -clientconfig=Shipping ^
-             -build ^
-             -cook ^
-             -stage ^
-             -package ^
-             -archive ^
-             -archivedirectory=C:\$env:PROJECT_NAME\Build
+            # Définir les chemins
+            $projectPath = "C:\${env:PROJECT_NAME}"
+            $checkoutPath = $PWD.Path
+            
+            Write-Host "Checkout path: $checkoutPath"
+            Write-Host "Project path: $projectPath"
+            Write-Host "Docker image: ${env:UE5_DOCKER_IMAGE}"
+            
+            # Exécuter le build dans le conteneur Docker
+            docker run --rm `
+              -v "${checkoutPath}:${projectPath}" `
+              ${env:UE5_DOCKER_IMAGE} `
+              powershell -Command "
+                & 'C:\UnrealEngine\Engine\Build\BatchFiles\RunUAT.bat' `
+                  BuildCookRun `
+                  -project='${projectPath}\${env:PROJECT_NAME}.uproject' `
+                  -platform=Win64 `
+                  -clientconfig=Development `
+                  -serverconfig=Development `
+                  -cook `
+                  -allmaps `
+                  -build `
+                  -stage `
+                  -archive `
+                  -archivedirectory='${projectPath}\Build' `
+                  -pak `
+                  -prereqs `
+                  -nodebuginfo
+              "
+      
+      - run:
+          name: Zip Build Output
+          shell: powershell.exe
+          command: |
+            $buildPath = "Build\Windows"
+            $zipPath = "Build\${env:PROJECT_NAME}-Windows.zip"
+            
+            Write-Host "Compressing build output from $buildPath"
+            
+            if (Test-Path $buildPath) {
+              Compress-Archive -Path "$buildPath\*" -DestinationPath $zipPath -Force
+              Write-Host "Build archived to $zipPath"
+            } else {
+              Write-Error "Build path $buildPath not found"
+              exit 1
+            }
+      
+      - store_artifacts:
+          path: Build/${PROJECT_NAME}-Windows.zip
+          destination: unreal-build
 
 workflows:
-  my-workflow:
+  version: 2
+  build-workflow:
     jobs:
-      - build
+      - build-unreal-project
