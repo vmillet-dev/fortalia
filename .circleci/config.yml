@@ -1,8 +1,8 @@
- version: 2.1
+version: 2.1
 
 orbs:
   win: circleci/windows@5.1.0
-  github-cli: circleci/github-cli@2.7.2
+  github-release: circleci/github-cli@2.7.2
 
 jobs:
   build-unreal-project:
@@ -16,6 +16,7 @@ jobs:
       - run:
           name: Docker Login
           command: echo $env:DOCKER_PASSWORD | docker login -u $env:DOCKER_USERNAME --password-stdin  
+      
       - run:
           name: Pull Unreal Engine image
           no_output_timeout: 40m
@@ -60,141 +61,40 @@ jobs:
               exit 1
             }
       
-      - persist_to_workspace:
-          root: Build
-          paths:
-            - "*.zip"
-      
       - store_artifacts:
           path: "Build/$env:PROJECT_NAME-Windows.zip"
           destination: unreal-build
-
-  create-github-release:
-    executor:
-      name: win/server-2022
-      size: medium
-      shell: powershell.exe
-    steps:
-      - checkout
-      - attach_workspace:
-          at: Build
       
-      - github-cli/setup:
+      - github-release/install:
           token: GITHUB_TOKEN
       
       - run:
-          name: Generate Changelog
+          name: Create GitHub Release and Upload
           command: |
-            # Récupérer le tag précédent
-            $previousTag = git describe --tags --abbrev=0 HEAD^ 2>$null
-            if (-not $previousTag) {
-              $previousTag = git rev-list --max-parents=0 HEAD
-              Write-Host "No previous tag found, using first commit: $previousTag"
+            
+            $tag = $env:CIRCLE_TAG
+            $zipPath = "Build\$env:PROJECT_NAME-Windows.zip"
+            
+            # Si pas de tag, utiliser le numéro de build
+            if ([string]::IsNullOrEmpty($tag)) {
+              $tag = "build-$env:CIRCLE_BUILD_NUM"
             }
             
-            $currentTag = $env:CIRCLE_TAG
-            Write-Host "Generating changelog from $previousTag to $currentTag"
+            Write-Host "Creating release for tag: $tag"
             
-            # Récupérer les commits
-            $commits = git log "$previousTag..$currentTag" --pretty=format:"%H|%s|%an|%ae" --no-merges
-            
-            # Initialiser les catégories
-            $features = @()
-            $fixes = @()
-            $docs = @()
-            $other = @()
-            
-            # Classifier les commits
-            foreach ($commit in $commits) {
-              if ([string]::IsNullOrWhiteSpace($commit)) { continue }
-              
-              $parts = $commit -split '\|'
-              $hash = $parts[0].Substring(0, 7)
-              $message = $parts[1]
-              $author = $parts[2]
-              
-              $line = "- $message ([$hash](https://github.com/$env:CIRCLE_PROJECT_USERNAME/$env:CIRCLE_PROJECT_REPONAME/commit/$($parts[0])))"
-              
-              if ($message -match "^feat(\(.*?\))?:") {
-                $features += $line
-              } elseif ($message -match "^fix(\(.*?\))?:") {
-                $fixes += $line
-              } elseif ($message -match "^docs(\(.*?\))?:") {
-                $docs += $line
-              } else {
-                $other += $line
-              }
-            }
-            
-            # Générer le changelog
-            $changelog = "# Release $currentTag`n`n"
-            
-            if ($features.Count -gt 0) {
-              $changelog += "## ✨ New Features`n`n"
-              $changelog += ($features -join "`n") + "`n`n"
-            }
-            
-            if ($fixes.Count -gt 0) {
-              $changelog += "## 🐛 Bug Fixes`n`n"
-              $changelog += ($fixes -join "`n") + "`n`n"
-            }
-            
-            if ($docs.Count -gt 0) {
-              $changelog += "## 📚 Documentation`n`n"
-              $changelog += ($docs -join "`n") + "`n`n"
-            }
-            
-            if ($other.Count -gt 0) {
-              $changelog += "## 🔧 Other Changes`n`n"
-              $changelog += ($other -join "`n") + "`n`n"
-            }
-            
-            # Ajouter les contributeurs
-            $contributors = git log "$previousTag..$currentTag" --pretty=format:"%an" --no-merges | Sort-Object -Unique
-            if ($contributors) {
-              $changelog += "## 👥 Contributors`n`n"
-              $changelog += "Thanks to all contributors:`n"
-              foreach ($contributor in $contributors) {
-                $changelog += "- $contributor`n"
-              }
-            }
-            
-            # Sauvegarder le changelog
-            $changelog | Out-File -FilePath "CHANGELOG.md" -Encoding UTF8
-            Write-Host "Changelog generated:"
-            Get-Content "CHANGELOG.md"
-      
-      - run:
-          name: Create GitHub Release
-          command: |
-            $tagName = $env:CIRCLE_TAG
-            $zipFile = "Build\$env:PROJECT_NAME-Windows.zip"
-            
-            Write-Host "Creating GitHub release for tag $tagName"
-            
-            # Créer la release avec le changelog
-            gh release create $tagName `
-              $zipFile `
-              --title "Release $tagName" `
-              --notes-file CHANGELOG.md `
-              --repo "$env:CIRCLE_PROJECT_USERNAME/$env:CIRCLE_PROJECT_REPONAME"
-            
-            Write-Host "Release created successfully!"
+            # Créer la release et uploader le fichier
+            gh release create $tag $zipPath `
+              --repo "$env:CIRCLE_PROJECT_USERNAME/$env:CIRCLE_PROJECT_REPONAME" `
+              --title "$env:PROJECT_NAME - $tag" `
+              --notes "Automated build from CircleCI`n`nBuild #$env:CIRCLE_BUILD_NUM`nCommit: $env:CIRCLE_SHA1" `
+              --prerelease
 
 workflows:
   version: 2
   build-workflow:
     jobs:
       - build-unreal-project:
+          context: github
           filters:
             tags:
               only: /.*/
-      
-      - create-github-release:
-          requires:
-            - build-unreal-project
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
