@@ -1,8 +1,7 @@
 version: 2.1
 
 orbs:
-  win: circleci/windows@5.1.0
-  github-release: circleci/github-cli@2.7.2
+  win: circleci/windows@5.0
 
 jobs:
   build-unreal-project:
@@ -49,43 +48,102 @@ jobs:
           name: Zip Build Output
           command: |
             $buildPath = "Build\Windows"
-            $zipPath = "Build\$env:PROJECT_NAME-Windows.zip"
+            $zipName = "$env:PROJECT_NAME-Windows.zip"
+            $zipPath = "Build\$zipName"
             
             Write-Host "Compressing build output from $buildPath"
             
             if (Test-Path $buildPath) {
               Compress-Archive -Path "$buildPath\*" -DestinationPath $zipPath -Force
               Write-Host "Build archived to $zipPath"
+              
+              # Créer un fichier avec le nom pour l'utiliser plus tard
+              $zipName | Out-File -FilePath "Build\artifact-name.txt" -Encoding utf8
             } else {
               Write-Error "Build path $buildPath not found"
               exit 1
             }
       
+      - run:
+          name: List Build Directory
+          command: |
+            Write-Host "Contents of Build directory:"
+            Get-ChildItem -Path "Build" -Recurse | Select-Object FullName
+      
       - store_artifacts:
-          path: "Build/$env:PROJECT_NAME-Windows.zip"
+          path: Build
           destination: unreal-build
       
-      - github-release/install
-      
       - run:
-          name: Create GitHub Release and Upload
+          name: Upload to GitHub Release
           command: |
+            $zipName = Get-Content "Build\artifact-name.txt"
+            $zipPath = "Build\$zipName"
             $tag = $env:CIRCLE_TAG
-            $zipPath = "Build\$env:PROJECT_NAME-Windows.zip"
+            $repo = "$env:CIRCLE_PROJECT_USERNAME/$env:CIRCLE_PROJECT_REPONAME"
             
             # Si pas de tag, utiliser le numéro de build
             if ([string]::IsNullOrEmpty($tag)) {
               $tag = "build-$env:CIRCLE_BUILD_NUM"
+              Write-Host "No tag found, using: $tag"
             }
             
-            Write-Host "Creating release for tag: $tag"
+            Write-Host "Uploading $zipPath to GitHub release $tag"
             
-            # Créer la release et uploader le fichier
-            gh release create $tag $zipPath `
-              --repo "$env:CIRCLE_PROJECT_USERNAME/$env:CIRCLE_PROJECT_REPONAME" `
-              --title "$env:PROJECT_NAME - $tag" `
-              --notes "Automated build from CircleCI`n`nBuild #$env:CIRCLE_BUILD_NUM`nCommit: $env:CIRCLE_SHA1" `
-              --prerelease
+            # Vérifier si le fichier existe
+            if (-not (Test-Path $zipPath)) {
+              Write-Error "Build archive not found at $zipPath"
+              exit 1
+            }
+            
+            # Créer ou obtenir la release
+            $headers = @{
+              "Authorization" = "token $env:GITHUB_TOKEN"
+              "Accept" = "application/vnd.github.v3+json"
+            }
+            
+            # Vérifier si la release existe
+            $releaseUrl = "https://api.github.com/repos/$repo/releases/tags/$tag"
+            
+            try {
+              $release = Invoke-RestMethod -Uri $releaseUrl -Headers $headers -Method Get -ErrorAction Stop
+              Write-Host "Release $tag already exists (ID: $($release.id))"
+            } catch {
+              Write-Host "Creating new release for tag $tag"
+              
+              $releaseData = @{
+                tag_name = $tag
+                name = "$env:PROJECT_NAME - $tag"
+                body = "Automated build from CircleCI`n`nBuild #$env:CIRCLE_BUILD_NUM`nCommit: $env:CIRCLE_SHA1"
+                draft = $false
+                prerelease = $true
+              } | ConvertTo-Json
+              
+              $createUrl = "https://api.github.com/repos/$repo/releases"
+              $release = Invoke-RestMethod -Uri $createUrl -Headers $headers -Method Post -Body $releaseData -ContentType "application/json"
+              Write-Host "Release created (ID: $($release.id))"
+            }
+            
+            # Upload de l'asset
+            $uploadUrl = $release.upload_url -replace '\{\?name,label\}', "?name=$zipName"
+            
+            Write-Host "Uploading to: $uploadUrl"
+            
+            $fileBytes = [System.IO.File]::ReadAllBytes((Resolve-Path $zipPath).Path)
+            $uploadHeaders = @{
+              "Authorization" = "token $env:GITHUB_TOKEN"
+              "Content-Type" = "application/zip"
+            }
+            
+            try {
+              $uploadResult = Invoke-RestMethod -Uri $uploadUrl -Headers $uploadHeaders -Method Post -Body $fileBytes
+              Write-Host "Upload completed successfully!"
+              Write-Host "Download URL: $($uploadResult.browser_download_url)"
+            } catch {
+              Write-Error "Upload failed: $_"
+              Write-Error $_.Exception.Response
+              exit 1
+            }
 
 workflows:
   version: 2
