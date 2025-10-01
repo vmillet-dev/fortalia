@@ -18,7 +18,7 @@ jobs:
 
       - run:
           name: Docker Login
-          shell: cmd.exe
+          shell: powershell.exe
           command: echo dckr_pat_58UdxSwgUSoRtnpxP-5SnToPUwU | docker login -u vmilletdev --password-stdin
       
       - run:
