@@ -65,13 +65,11 @@ jobs:
           path: "Build/$env:PROJECT_NAME-Windows.zip"
           destination: unreal-build
       
-      - github-release/install:
-          token: GITHUB_TOKEN
+      - github-release/install
       
       - run:
           name: Create GitHub Release and Upload
           command: |
-            
             $tag = $env:CIRCLE_TAG
             $zipPath = "Build\$env:PROJECT_NAME-Windows.zip"
             
