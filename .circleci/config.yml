@@ -18,10 +18,9 @@ jobs:
 
       - run:
           name: Docker Login
-          shell: powershell.exe
-          command: echo $env:DOCKER_PAT | docker login -u $env:DOCKER_USERNAME --password-stdin
-            
-
+          shell: cmd.exe
+          command: echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin
+      
       - run:
           name: Pull image Unreal Engine
           no_output_timeout: 40m
