@@ -19,7 +19,7 @@ jobs:
       - run:
           name: Docker Login
           shell: cmd.exe
-          command: echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin
+          command: echo %DOCKER_PAT% | docker login -u %DOCKER_USERNAME% --password-stdin
       
       - run:
           name: Pull image Unreal Engine
